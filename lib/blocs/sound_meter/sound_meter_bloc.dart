@@ -12,15 +12,17 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
   double _minDb = 120;
   double _avgDb = 0;
   Duration _duration = Duration.zero;
-  final int _tickMs = 100;
+  final int _tickMs = 33;
 
   bool _isFirstReading = true;
+  final List<double> _dbHistory = [];
 
   SoundMeterBloc() : super(SoundMeterInitial()) {
     on<InitializeSoundMeter>(_onInitialize);
     on<UpdateSoundMeterDb>(_onUpdate);
     on<TogglePauseSoundMeter>(_onTogglePause);
     on<StopSoundMeter>(_onStop);
+    on<ResetSoundMeter>(_onReset);
   }
 
   void _startTimer() {
@@ -30,7 +32,21 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
       volumeDbFs = volumeDbFs.clamp(-120.0, 0.0);
       double currentDb = (volumeDbFs + 100);
       if (currentDb < 0) currentDb = 0.0;
-      add(UpdateSoundMeterDb(currentDb));
+      
+      final waveData = Recorder.instance.getWave();
+      final fftData = Recorder.instance.getFft();
+      
+      double peakVal = 0.0;
+      int peakIndex = 0;
+      for (int i = 0; i < fftData.length; i++) {
+        if (fftData[i] > peakVal) {
+          peakVal = fftData[i];
+          peakIndex = i;
+        }
+      }
+      double peakFrequency = peakIndex * (44100.0 / 2 / 256);
+
+      add(UpdateSoundMeterDb(currentDb, waveData, fftData, peakFrequency));
     });
   }
 
@@ -115,6 +131,12 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
 
     final db = event.dbValue;
     
+    _dbHistory.add(db);
+    // keep max 24 seconds (33ms * 730 = 24s. Let's cap at 800)
+    if (_dbHistory.length > 800) {
+      _dbHistory.removeAt(0);
+    }
+    
     if (_isFirstReading) {
       // Ignore absolute 0.0 which miniaudio returns while buffers warm up initially
       if (db > 0.0) {
@@ -139,6 +161,10 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
         avgDb: _avgDb,
         duration: _duration,
         hasReading: !_isFirstReading,
+        dbHistory: List.of(_dbHistory),
+        waveData: event.waveData,
+        fftData: event.fftData,
+        peakFrequency: event.peakFrequency,
       ),
     );
   }
@@ -151,6 +177,37 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     } catch (_) {}
     emit(SoundMeterInitial());
   }
+
+  void _onReset(ResetSoundMeter event, Emitter<SoundMeterState> emit) {
+    _timer?.cancel();
+    try {
+      Recorder.instance.stop();
+    } catch (_) {}
+
+    _maxDb = 0;
+    _minDb = 120;
+    _avgDb = 0;
+    _duration = Duration.zero;
+    _isFirstReading = true;
+    _dbHistory.clear();
+
+    emit(
+      SoundMeterRecording(
+        currentDb: 0,
+        maxDb: 0,
+        minDb: 0,
+        avgDb: 0,
+        duration: Duration.zero,
+        isPaused: true,
+        hasReading: false,
+        dbHistory: const [],
+        waveData: const [],
+        fftData: const [],
+        peakFrequency: 0.0,
+      ),
+    );
+  }
+
 
   @override
   Future<void> close() {

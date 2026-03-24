@@ -10,6 +10,11 @@ class SoundMeterRecording extends SoundMeterState {
   final Duration duration;
   final bool isPaused;
   final bool hasReading;
+  
+  final List<double> dbHistory;
+  final List<double> waveData;
+  final List<double> fftData;
+  final double peakFrequency;
 
   SoundMeterRecording({
     required this.currentDb,
@@ -19,6 +24,10 @@ class SoundMeterRecording extends SoundMeterState {
     required this.duration,
     this.isPaused = false,
     this.hasReading = false,
+    this.dbHistory = const [],
+    this.waveData = const [],
+    this.fftData = const [],
+    this.peakFrequency = 0.0,
   });
 
   SoundMeterRecording copyWith({
@@ -29,6 +38,10 @@ class SoundMeterRecording extends SoundMeterState {
     Duration? duration,
     bool? isPaused,
     bool? hasReading,
+    List<double>? dbHistory,
+    List<double>? waveData,
+    List<double>? fftData,
+    double? peakFrequency,
   }) {
     return SoundMeterRecording(
       currentDb: currentDb ?? this.currentDb,
@@ -38,6 +51,10 @@ class SoundMeterRecording extends SoundMeterState {
       duration: duration ?? this.duration,
       isPaused: isPaused ?? this.isPaused,
       hasReading: hasReading ?? this.hasReading,
+      dbHistory: dbHistory ?? this.dbHistory,
+      waveData: waveData ?? this.waveData,
+      fftData: fftData ?? this.fftData,
+      peakFrequency: peakFrequency ?? this.peakFrequency,
     );
   }
 }

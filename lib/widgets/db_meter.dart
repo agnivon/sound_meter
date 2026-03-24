@@ -176,14 +176,14 @@ class DbMeter extends StatelessWidget {
 
         // Current Main Value Block
         Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
+          crossAxisAlignment: CrossAxisAlignment.center,
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
               hasReading ? currentDb.toStringAsFixed(1) : '-.-',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 60,
+                fontSize: 50,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -196,14 +196,14 @@ class DbMeter extends StatelessWidget {
                   '$minutes:$seconds',
                   style: const TextStyle(
                     color: Color(0xFF999999),
-                    fontSize: 18,
+                    fontSize: 14,
                   ),
                 ),
                 const Text(
                   'dB',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
