@@ -32,7 +32,10 @@ class DbMeter extends StatelessWidget {
         const SizedBox(height: 30),
         Text(
           description,
-          style: const TextStyle(color: Colors.grey, fontSize: 20),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            fontSize: 20,
+          ),
         ),
       ],
     );
@@ -59,7 +62,8 @@ class DbMeter extends StatelessWidget {
             minorTicksPerInterval: 1,
             majorTickStyle: const MajorTickStyle(length: 25, thickness: 3),
             minorTickStyle: const MinorTickStyle(length: 10, thickness: 2),
-            axisLabelStyle: const GaugeTextStyle(
+            axisLabelStyle: GaugeTextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -100,14 +104,17 @@ class DbMeter extends StatelessWidget {
                 widget: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'Min',
-                      style: TextStyle(color: Color(0xFF6A6A6A), fontSize: 13),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        fontSize: 13,
+                      ),
                     ),
                     Text(
                       hasReading ? minDb.toStringAsFixed(0) : '-',
-                      style: const TextStyle(
-                        color: Color(0xFF6A6A6A),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                         fontSize: 13,
                       ),
                     ),
@@ -162,14 +169,20 @@ class DbMeter extends StatelessWidget {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'AVG',
-              style: TextStyle(color: Color(0xFF999999), fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 5),
             Text(
               hasReading ? avgDb.toStringAsFixed(1) : '--',
-              style: const TextStyle(color: Color(0xFF999999), fontSize: 20),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 20,
+              ),
             ),
           ],
         ),
@@ -181,8 +194,8 @@ class DbMeter extends StatelessWidget {
           children: [
             Text(
               hasReading ? currentDb.toStringAsFixed(1) : '-.-',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 50,
                 fontWeight: FontWeight.w400,
               ),
@@ -194,15 +207,15 @@ class DbMeter extends StatelessWidget {
               children: [
                 Text(
                   '$minutes:$seconds',
-                  style: const TextStyle(
-                    color: Color(0xFF999999),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     fontSize: 14,
                   ),
                 ),
-                const Text(
+                Text(
                   'dB',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
@@ -216,14 +229,20 @@ class DbMeter extends StatelessWidget {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'MAX',
-              style: TextStyle(color: Color(0xFF999999), fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 5),
             Text(
               hasReading ? maxDb.toStringAsFixed(1) : '--',
-              style: const TextStyle(color: Color(0xFF999999), fontSize: 20),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 20,
+              ),
             ),
           ],
         ),

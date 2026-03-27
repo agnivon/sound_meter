@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../blocs/theme/theme_bloc.dart';
+import '../blocs/theme/theme_event.dart';
+import '../blocs/theme/theme_state.dart';
 import '../blocs/sound_meter/sound_meter_bloc.dart';
 import '../blocs/sound_meter/sound_meter_event.dart';
 import '../blocs/sound_meter/sound_meter_state.dart';
@@ -27,13 +29,27 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
-        title: const Text('Real-Time Noise Meter'),
-        backgroundColor: const Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('Sound Meter'),
         actions: [
+          BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, themeState) {
+              IconData themeIcon;
+              if (themeState.themeMode == ThemeMode.system) {
+                themeIcon = Icons.settings_brightness;
+              } else if (themeState.themeMode == ThemeMode.light) {
+                themeIcon = Icons.light_mode;
+              } else {
+                themeIcon = Icons.dark_mode;
+              }
+              return IconButton(
+                icon: Icon(themeIcon),
+                onPressed: () {
+                  context.read<ThemeBloc>().add(ToggleTheme());
+                },
+              );
+            },
+          ),
           BlocBuilder<SoundMeterBloc, SoundMeterState>(
             builder: (context, state) {
               return IconButton(
@@ -148,15 +164,13 @@ class _MainScreenState extends State<MainScreen> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: state.isPaused
-                                    ? Colors.grey.shade800
-                                    : const Color(
-                                        0xFFE85A3F,
-                                      ).withValues(alpha: 0.2),
+                                    ? Theme.of(context).colorScheme.surfaceContainerHighest
+                                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: state.isPaused
-                                      ? Colors.grey
-                                      : const Color(0xFFE85A3F),
+                                      ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                                      : Theme.of(context).colorScheme.primary,
                                   width: 2,
                                 ),
                               ),
@@ -165,15 +179,15 @@ class _MainScreenState extends State<MainScreen> {
                                     ? Icons.play_arrow_rounded
                                     : Icons.pause_rounded,
                                 color: state.isPaused
-                                    ? Colors.white
-                                    : const Color(0xFFE85A3F),
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Theme.of(context).colorScheme.primary,
                                 size: 48,
                               ),
                             ),
                           ),
                           IconButton(
                             icon: const Icon(Icons.refresh),
-                            color: Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                             onPressed: () {
                               context.read<SoundMeterBloc>().add(
                                 ResetSoundMeter(),
@@ -187,7 +201,7 @@ class _MainScreenState extends State<MainScreen> {
                 );
               }
 
-              return const CircularProgressIndicator(color: Colors.redAccent);
+              return CircularProgressIndicator(color: Theme.of(context).colorScheme.primary);
             },
           ),
         ),

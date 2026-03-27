@@ -22,12 +22,16 @@ class TimelineChartWidget extends StatelessWidget {
       data.add(ChartData(x, history[i]));
     }
 
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final gridColor = onSurface.withValues(alpha: 0.1);
+    final labelStyle = TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 10);
+
     return AspectRatio(
       aspectRatio: 1.5,
       child: SfCartesianChart(
         margin: const EdgeInsets.all(0),
         plotAreaBorderWidth: 0,
-        primaryXAxis: const NumericAxis(
+        primaryXAxis: NumericAxis(
           minimum: -24,
           maximum: 0,
           interval: 4,
@@ -35,12 +39,12 @@ class TimelineChartWidget extends StatelessWidget {
           majorGridLines: MajorGridLines(
             width: 1,
             dashArray: [5, 5],
-            color: Colors.white24,
+            color: gridColor,
           ),
-          axisLine: AxisLine(width: 0),
-          labelStyle: TextStyle(color: Colors.white54, fontSize: 10),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: labelStyle,
         ),
-        primaryYAxis: const NumericAxis(
+        primaryYAxis: NumericAxis(
           minimum: 0,
           maximum: 120,
           interval: 20,
@@ -48,10 +52,10 @@ class TimelineChartWidget extends StatelessWidget {
           majorGridLines: MajorGridLines(
             width: 1,
             dashArray: [5, 5],
-            color: Colors.white24,
+            color: gridColor,
           ),
-          axisLine: AxisLine(width: 0),
-          labelStyle: TextStyle(color: Colors.white54, fontSize: 10),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: labelStyle,
         ),
         series: <CartesianSeries>[
           LineSeries<ChartData, double>(
@@ -81,12 +85,16 @@ class WaveChartWidget extends StatelessWidget {
       data.add(ChartData(i.toDouble(), waveData[i]));
     }
 
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final gridColor = onSurface.withValues(alpha: 0.1);
+    final labelStyle = TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 10);
+
     return AspectRatio(
       aspectRatio: 1.5,
       child: SfCartesianChart(
         margin: const EdgeInsets.all(0),
         plotAreaBorderWidth: 0,
-        primaryXAxis: const NumericAxis(
+        primaryXAxis: NumericAxis(
           minimum: 0,
           maximum: 256,
           interval: 32,
@@ -94,14 +102,14 @@ class WaveChartWidget extends StatelessWidget {
           majorGridLines: MajorGridLines(
             width: 1,
             dashArray: [5, 5],
-            color: Colors.white24,
+            color: gridColor,
           ),
-          axisLine: AxisLine(width: 0),
-          labelStyle: TextStyle(fontSize: 0),
-          minorGridLines: MinorGridLines(width: 0),
-          majorTickLines: MajorTickLines(size: 0),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: const TextStyle(fontSize: 0),
+          minorGridLines: const MinorGridLines(width: 0),
+          majorTickLines: const MajorTickLines(size: 0),
         ),
-        primaryYAxis: const NumericAxis(
+        primaryYAxis: NumericAxis(
           minimum: -1,
           maximum: 1,
           interval: 0.5,
@@ -110,12 +118,12 @@ class WaveChartWidget extends StatelessWidget {
           majorGridLines: MajorGridLines(
             width: 1,
             dashArray: [5, 5],
-            color: Colors.white24,
+            color: gridColor,
           ),
-          axisLine: AxisLine(width: 0),
-          labelStyle: TextStyle(color: Colors.white54, fontSize: 10),
-          minorGridLines: MinorGridLines(width: 0),
-          majorTickLines: MajorTickLines(size: 0),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: labelStyle,
+          minorGridLines: const MinorGridLines(width: 0),
+          majorTickLines: const MajorTickLines(size: 0),
         ),
         series: <CartesianSeries>[
           LineSeries<ChartData, double>(
@@ -157,24 +165,28 @@ class FftChartWidget extends StatelessWidget {
       data.add(ChartData(freq, val));
     }
 
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final gridColor = onSurface.withValues(alpha: 0.1);
+    final labelStyle = TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 10);
+
     return AspectRatio(
       aspectRatio: 1.5,
       child: SfCartesianChart(
         margin: const EdgeInsets.all(0),
         plotAreaBorderWidth: 0,
-        primaryXAxis: const LogarithmicAxis(
+        primaryXAxis: LogarithmicAxis(
           minimum: 20,
           maximum: 20000,
           labelFormat: '{value}',
           majorGridLines: MajorGridLines(
             width: 1,
             dashArray: [5, 5],
-            color: Colors.white24,
+            color: gridColor,
           ),
-          axisLine: AxisLine(width: 0),
-          labelStyle: TextStyle(color: Colors.white54, fontSize: 10),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: labelStyle,
         ),
-        primaryYAxis: const NumericAxis(
+        primaryYAxis: NumericAxis(
           minimum: -20,
           maximum: 100,
           interval: 20,
@@ -182,16 +194,16 @@ class FftChartWidget extends StatelessWidget {
           majorGridLines: MajorGridLines(
             width: 1,
             dashArray: [5, 5],
-            color: Colors.white24,
+            color: gridColor,
           ),
-          axisLine: AxisLine(width: 0),
-          labelStyle: TextStyle(color: Colors.white54, fontSize: 10),
+          axisLine: const AxisLine(width: 0),
+          labelStyle: labelStyle,
         ),
         annotations: <CartesianChartAnnotation>[
           CartesianChartAnnotation(
             widget: Text(
               '${peakFrequency.toStringAsFixed(1)} Hz',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+              style: TextStyle(color: onSurface, fontSize: 12),
             ),
             coordinateUnit: CoordinateUnit.percentage,
             x: '50%',

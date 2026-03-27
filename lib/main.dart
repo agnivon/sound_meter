@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'blocs/theme/theme_bloc.dart';
+import 'blocs/theme/theme_state.dart';
 import 'blocs/sound_meter/sound_meter_bloc.dart';
 import 'screens/main_screen.dart';
 
@@ -29,16 +31,55 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SoundMeterBloc(),
-      child: MaterialApp(
-        title: 'Sound Meter',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
-          useMaterial3: true,
-        ),
-        home: const MainScreen(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => SoundMeterBloc()),
+        BlocProvider(create: (context) => ThemeBloc()),
+      ],
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: 'Sound Meter',
+            debugShowCheckedModeBanner: false,
+            themeMode: themeState.themeMode,
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFFE85A3F),
+                brightness: Brightness.light,
+                primary: const Color(0xFFE85A3F),
+                surface: const Color(0xFFFAFAFA),
+                onSurface: const Color(0xFF2C2C2C),
+                secondary: const Color(0xFFF18A76),
+              ),
+              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFFFFFFFF),
+                foregroundColor: Color(0xFF2C2C2C),
+                elevation: 0,
+              ),
+            ),
+            darkTheme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFFE85A3F),
+                brightness: Brightness.dark,
+                primary: const Color(0xFFE85A3F),
+                surface: const Color(0xFF1A1A1A),
+                onSurface: const Color(0xFFE0E0E0),
+                secondary: const Color(0xFFF18A76),
+                shadow: const Color(0x66000000),
+              ),
+              scaffoldBackgroundColor: const Color(0xFF0F0F0F),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF1A1A1A),
+                foregroundColor: Color(0xFFE0E0E0),
+                elevation: 0,
+              ),
+            ),
+            home: const MainScreen(),
+          );
+        },
       ),
     );
   }

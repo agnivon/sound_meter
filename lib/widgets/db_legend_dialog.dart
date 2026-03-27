@@ -40,7 +40,7 @@ void showDbLegendDialog(BuildContext context, double currentDb) {
     context: context,
     builder: (context) {
       return Dialog(
-        backgroundColor: const Color(0xFF2C2C2C),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -51,17 +51,17 @@ void showDbLegendDialog(BuildContext context, double currentDb) {
             children: [
               Text(
                 '${currentDb.toStringAsFixed(1)} dB',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Reference Chart',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   fontSize: 16,
                 ),
               ),
@@ -79,8 +79,8 @@ void showDbLegendDialog(BuildContext context, double currentDb) {
                       const SizedBox(width: 16),
                       Text(
                         '${ref.db}dB : ${ref.description}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 16,
                         ),
                       ),
