@@ -9,6 +9,7 @@ import '../blocs/sound_meter/sound_meter_state.dart';
 import '../widgets/db_legend_dialog.dart';
 import '../widgets/db_meter.dart';
 import '../widgets/charts.dart';
+import '../widgets/calibration_dialog.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -32,16 +33,15 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: const Text('Sound Meter'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.track_changes),
+            onPressed: () => showCalibrationDialog(context),
+          ),
           BlocBuilder<ThemeBloc, ThemeState>(
             builder: (context, themeState) {
-              IconData themeIcon;
-              if (themeState.themeMode == ThemeMode.system) {
-                themeIcon = Icons.settings_brightness;
-              } else if (themeState.themeMode == ThemeMode.light) {
-                themeIcon = Icons.light_mode;
-              } else {
-                themeIcon = Icons.dark_mode;
-              }
+              IconData themeIcon = themeState.themeMode == ThemeMode.light
+                  ? Icons.light_mode
+                  : Icons.dark_mode;
               return IconButton(
                 icon: Icon(themeIcon),
                 onPressed: () {

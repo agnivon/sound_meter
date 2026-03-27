@@ -16,3 +16,8 @@ class StopSoundMeter extends SoundMeterEvent {}
 class TogglePauseSoundMeter extends SoundMeterEvent {}
 
 class ResetSoundMeter extends SoundMeterEvent {}
+
+class UpdateDbOffset extends SoundMeterEvent {
+  final double offset;
+  UpdateDbOffset(this.offset);
+}

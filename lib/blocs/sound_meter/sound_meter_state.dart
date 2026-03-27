@@ -15,6 +15,8 @@ class SoundMeterRecording extends SoundMeterState {
   final List<double> waveData;
   final List<double> fftData;
   final double peakFrequency;
+  final double dbOffset;
+  final double rawDb;
 
   SoundMeterRecording({
     required this.currentDb,
@@ -28,6 +30,8 @@ class SoundMeterRecording extends SoundMeterState {
     this.waveData = const [],
     this.fftData = const [],
     this.peakFrequency = 0.0,
+    this.dbOffset = 0.0,
+    this.rawDb = 0.0,
   });
 
   SoundMeterRecording copyWith({
@@ -42,6 +46,8 @@ class SoundMeterRecording extends SoundMeterState {
     List<double>? waveData,
     List<double>? fftData,
     double? peakFrequency,
+    double? dbOffset,
+    double? rawDb,
   }) {
     return SoundMeterRecording(
       currentDb: currentDb ?? this.currentDb,
@@ -55,6 +61,8 @@ class SoundMeterRecording extends SoundMeterState {
       waveData: waveData ?? this.waveData,
       fftData: fftData ?? this.fftData,
       peakFrequency: peakFrequency ?? this.peakFrequency,
+      dbOffset: dbOffset ?? this.dbOffset,
+      rawDb: rawDb ?? this.rawDb,
     );
   }
 }

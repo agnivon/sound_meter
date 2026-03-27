@@ -6,8 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'sound_meter_event.dart';
 import 'sound_meter_state.dart';
 
-/// The [SoundMeterBloc] manages the application's core audio recording state, 
-/// processing native device microphone input to extract decibel levels, waveform buffers, 
+/// The [SoundMeterBloc] manages the application's core audio recording state,
+/// processing native device microphone input to extract decibel levels, waveform buffers,
 /// and Fast Fourier Transform (FFT) data dynamically in real-time.
 ///
 /// It utilizes `flutter_recorder` to interface natively with the system microphone,
@@ -37,6 +37,9 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
   /// allowing it to skip initial digital zero-state warm-up limits.
   bool _isFirstReading = true;
 
+  /// The calibration offset in dB applied to all incoming hardware readings.
+  double _dbOffset = 0.0;
+
   /// Maintains a rolling sliding window of historical dB values.
   /// Used predominantly to render the continuous red timeline graph mapping backwards over ~24 seconds.
   final List<double> _dbHistory = [];
@@ -47,12 +50,22 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     on<TogglePauseSoundMeter>(_onTogglePause);
     on<StopSoundMeter>(_onStop);
     on<ResetSoundMeter>(_onReset);
+    on<UpdateDbOffset>(_onUpdateDbOffset);
+  }
+
+  /// Handles the calibration offset update logic.
+  void _onUpdateDbOffset(UpdateDbOffset event, Emitter<SoundMeterState> emit) {
+    _dbOffset = event.offset;
+    if (state is SoundMeterRecording) {
+      final s = state as SoundMeterRecording;
+      emit(s.copyWith(dbOffset: _dbOffset));
+    }
   }
 
   /// Initiates the continuous background hardware polling loop.
-  /// 
-  /// Triggers automatically every 33 milliseconds to pull synchronous live snapshots from the Native audio thread. 
-  /// Calculates internal peak decibels, extracts raw waves, executes FFT mapping, 
+  ///
+  /// Triggers automatically every 33 milliseconds to pull synchronous live snapshots from the Native audio thread.
+  /// Calculates internal peak decibels, extracts raw waves, executes FFT mapping,
   /// and discovers the prevailing peak frequency pitch before dispatching an internal update event.
   void _startTimer() {
     // Ensure any previously stray timer is safely killed before allocating a new loop constraint.
@@ -61,17 +74,17 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
       // 1. Fetch the raw amplitude in dBFS (decibels relative to full scale) which naturally ranges from -120 to 0.
       double volumeDbFs = Recorder.instance.getVolumeDb();
       volumeDbFs = volumeDbFs.clamp(-120.0, 0.0);
-      
+
       // Convert mapping from negative DBFS space into absolute positive environmental decibel (0 to 120 bounds).
       double currentDb = (volumeDbFs + 100);
       if (currentDb < 0) currentDb = 0.0;
-      
+
       // 2. Extract the synchronous raw audio physical membrane array output (ranging from -1.0 to 1.0).
       final waveData = Recorder.instance.getWave();
-      
+
       // 3. Extract the computed Fast Fourier Transform frequency bins recursively.
       final fftData = Recorder.instance.getFft();
-      
+
       // Loop over the FFT array to mathematically isolate the highest magnitude frequency bin.
       double peakVal = 0.0;
       int peakIndex = 0;
@@ -128,6 +141,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
           minDb: 0,
           avgDb: 0,
           duration: Duration.zero,
+          dbOffset: _dbOffset,
         ),
       );
     } catch (e) {
@@ -136,7 +150,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     }
   }
 
-  /// Toggles the hardware buffer native reading loop on or off efficiently, 
+  /// Toggles the hardware buffer native reading loop on or off efficiently,
   /// managing permission bounds implicitly when un-pausing.
   Future<void> _onTogglePause(
     TogglePauseSoundMeter event,
@@ -176,22 +190,25 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
   /// Aggregates mapping arrays securely, rolling calculations logically, and emits structural copies seamlessly.
   void _onUpdate(UpdateSoundMeterDb event, Emitter<SoundMeterState> emit) {
     if (state is! SoundMeterRecording && state is! SoundMeterInitial) return;
-    if (state is SoundMeterRecording && (state as SoundMeterRecording).isPaused) {
+    if (state is SoundMeterRecording &&
+        (state as SoundMeterRecording).isPaused) {
       return;
     }
 
-    final db = event.dbValue;
-    
+    final rawDb = event.dbValue;
+    // Apply calibration offset
+    final db = rawDb + _dbOffset;
+
     // Manage a strictly shifting sliding window for Timeline rendering dynamically.
     _dbHistory.add(db);
     // Hard cap mapping queue size safely to prevent memory leak structural crashes globally. (~24 seconds limit natively).
     if (_dbHistory.length > 800) {
       _dbHistory.removeAt(0);
     }
-    
+
     // Filter physical warm-up glitches. Native audio buses often dispatch explicit absolute 0.0 values briefly when locking bindings.
     if (_isFirstReading) {
-      if (db > 0.0) {
+      if (rawDb > 0.0) {
         _minDb = db;
         _maxDb = db;
         _avgDb = db;
@@ -210,11 +227,13 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     emit(
       SoundMeterRecording(
         currentDb: db,
+        rawDb: rawDb,
         maxDb: _maxDb,
         minDb: _minDb,
         avgDb: _avgDb,
         duration: _duration,
         hasReading: !_isFirstReading,
+        dbOffset: _dbOffset,
         dbHistory: List.of(_dbHistory),
         waveData: event.waveData,
         fftData: event.fftData,
@@ -233,7 +252,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     emit(SoundMeterInitial());
   }
 
-  /// Wipes all memory bindings, zeroing historical layout arrays structurally, but 
+  /// Wipes all memory bindings, zeroing historical layout arrays structurally, but
   /// keeps the UI firmly rendered on screen natively safely waiting for the user to resume playing dynamically.
   void _onReset(ResetSoundMeter event, Emitter<SoundMeterState> emit) {
     _timer?.cancel();
@@ -257,6 +276,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
         duration: Duration.zero,
         isPaused: true,
         hasReading: false,
+        dbOffset: _dbOffset,
         dbHistory: const [],
         waveData: const [],
         fftData: const [],

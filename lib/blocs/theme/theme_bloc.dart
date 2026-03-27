@@ -4,14 +4,12 @@ import 'theme_event.dart';
 import 'theme_state.dart';
 
 class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
-  ThemeBloc() : super(ThemeState(ThemeMode.system)) {
+  ThemeBloc(ThemeMode initialMode) : super(ThemeState(initialMode)) {
     on<ToggleTheme>((event, emit) {
-      if (state.themeMode == ThemeMode.system) {
+      if (state.themeMode == ThemeMode.dark) {
         emit(ThemeState(ThemeMode.light));
-      } else if (state.themeMode == ThemeMode.light) {
-        emit(ThemeState(ThemeMode.dark));
       } else {
-        emit(ThemeState(ThemeMode.system));
+        emit(ThemeState(ThemeMode.dark));
       }
     });
 

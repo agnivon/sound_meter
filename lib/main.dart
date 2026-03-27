@@ -31,10 +31,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Brightness systemBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final ThemeMode initialMode = systemBrightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => SoundMeterBloc()),
-        BlocProvider(create: (context) => ThemeBloc()),
+        BlocProvider(create: (context) => ThemeBloc(initialMode)),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
