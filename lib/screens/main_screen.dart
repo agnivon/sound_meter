@@ -39,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.tune),
-            tooltip: 'Measurement Filters',
+            tooltip: 'Weighting',
             onPressed: () => showWeightingDialog(context),
           ),
           BlocBuilder<ThemeBloc, ThemeState>(
@@ -55,6 +55,16 @@ class _MainScreenState extends State<MainScreen> {
               );
             },
           ),
+
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HistoryScreen()),
+              );
+            },
+          ),
           BlocBuilder<SoundMeterBloc, SoundMeterState>(
             builder: (context, state) {
               return IconButton(
@@ -66,15 +76,6 @@ class _MainScreenState extends State<MainScreen> {
                   }
                   showDbLegendDialog(context, currentAvg);
                 },
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HistoryScreen()),
               );
             },
           ),
@@ -171,7 +172,9 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.track_changes),
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                             onPressed: () => showCalibrationDialog(context),
                           ),
                           GestureDetector(
@@ -184,12 +187,16 @@ class _MainScreenState extends State<MainScreen> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: state.isPaused
-                                    ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest
+                                    : Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: state.isPaused
-                                      ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                                      ? Theme.of(context).colorScheme.onSurface
+                                            .withValues(alpha: 0.3)
                                       : Theme.of(context).colorScheme.primary,
                                   width: 2,
                                 ),
@@ -207,14 +214,31 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.save_outlined),
-                            color: state.hasReading 
-                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
-                                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                            onPressed: state.hasReading ? () => _showSaveDialog(context, state) : null,
+                            color: state.hasReading
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withValues(alpha: 0.7)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withValues(alpha: 0.2),
+                            onPressed: state.hasReading
+                                ? () {
+                                    final name =
+                                        'Recording ${DateFormat('HH:mm').format(DateTime.now())}';
+                                    context
+                                        .read<SoundMeterBloc>()
+                                        .add(SaveSoundMeter(name));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Recording saved!')),
+                                    );
+                                  }
+                                : null,
                           ),
                           IconButton(
                             icon: const Icon(Icons.refresh),
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                             onPressed: () {
                               context.read<SoundMeterBloc>().add(
                                 ResetSoundMeter(),
@@ -228,7 +252,9 @@ class _MainScreenState extends State<MainScreen> {
                 );
               }
 
-              return CircularProgressIndicator(color: Theme.of(context).colorScheme.primary);
+              return CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              );
             },
           ),
         ),
@@ -236,6 +262,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+/*
   void _showSaveDialog(BuildContext context, SoundMeterRecording state) {
     final controller = TextEditingController(
       text: 'Recording ${DateFormat('HH:mm').format(DateTime.now())}',
@@ -247,9 +274,7 @@ class _MainScreenState extends State<MainScreen> {
         title: const Text('Save Recording'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter recording name',
-          ),
+          decoration: const InputDecoration(hintText: 'Enter recording name'),
           autofocus: true,
         ),
         actions: [
@@ -274,4 +299,5 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+*/
 }
