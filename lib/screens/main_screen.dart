@@ -11,6 +11,7 @@ import '../widgets/db_legend_dialog.dart';
 import '../widgets/db_meter.dart';
 import '../widgets/charts.dart';
 import '../widgets/calibration_dialog.dart';
+import '../widgets/weighting_dialog.dart';
 import '../utils/sound_utils.dart';
 import 'history_screen.dart';
 
@@ -36,6 +37,11 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: const Text('Sound Meter'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Measurement Filters',
+            onPressed: () => showWeightingDialog(context),
+          ),
           BlocBuilder<ThemeBloc, ThemeState>(
             builder: (context, themeState) {
               IconData themeIcon = themeState.themeMode == ThemeMode.light
@@ -127,6 +133,7 @@ class _MainScreenState extends State<MainScreen> {
                         duration: state.duration,
                         hasReading: state.hasReading,
                         description: getEnvironmentDescription(state.avgDb),
+                        unit: state.freqWeighting.unit,
                       ),
                       const SizedBox(height: 10),
                       SegmentedDbGauge(

@@ -134,7 +134,7 @@ class _RecordingTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${recording.avgDb.toStringAsFixed(1)} dB',
+                    '${recording.avgDb.toStringAsFixed(1)} ${recording.unit}',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

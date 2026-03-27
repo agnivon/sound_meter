@@ -1,3 +1,5 @@
+import '../../utils/sound_utils.dart';
+
 abstract class SoundMeterEvent {}
 
 class InitializeSoundMeter extends SoundMeterEvent {}
@@ -16,6 +18,16 @@ class StopSoundMeter extends SoundMeterEvent {}
 class TogglePauseSoundMeter extends SoundMeterEvent {}
 
 class ResetSoundMeter extends SoundMeterEvent {}
+
+class SetFrequencyWeighting extends SoundMeterEvent {
+  final FrequencyWeighting weighting;
+  SetFrequencyWeighting(this.weighting);
+}
+
+class SetTimeWeighting extends SoundMeterEvent {
+  final TimeWeighting weighting;
+  SetTimeWeighting(this.weighting);
+}
 
 class UpdateDbOffset extends SoundMeterEvent {
   final double offset;

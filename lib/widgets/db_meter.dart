@@ -9,6 +9,7 @@ class DbMeter extends StatelessWidget {
   final Duration duration;
   final bool hasReading;
   final String description;
+  final String unit;
 
   const DbMeter({
     super.key,
@@ -19,6 +20,7 @@ class DbMeter extends StatelessWidget {
     required this.duration,
     required this.hasReading,
     required this.description,
+    this.unit = 'dB',
   });
 
   @override
@@ -213,7 +215,7 @@ class DbMeter extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'dB',
+                  unit,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,

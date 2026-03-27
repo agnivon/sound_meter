@@ -10,6 +10,7 @@ class SoundRecording {
   final Duration duration;
   final List<double> dbHistory;
   final String filePath;
+  final String unit;
 
   SoundRecording({
     required this.id,
@@ -21,6 +22,7 @@ class SoundRecording {
     required this.duration,
     required this.dbHistory,
     required this.filePath,
+    this.unit = 'dB',
   });
 
   Map<String, dynamic> toMap() {
@@ -34,6 +36,7 @@ class SoundRecording {
       'durationMs': duration.inMilliseconds,
       'dbHistory': dbHistory,
       'filePath': filePath,
+      'unit': unit,
     };
   }
 
@@ -48,6 +51,7 @@ class SoundRecording {
       duration: Duration(milliseconds: map['durationMs'] ?? 0),
       dbHistory: List<double>.from(map['dbHistory'] ?? []),
       filePath: map['filePath'] ?? '',
+      unit: map['unit'] ?? 'dB',
     );
   }
 
@@ -69,6 +73,7 @@ class SoundRecording {
       duration: duration,
       dbHistory: dbHistory,
       filePath: filePath ?? this.filePath,
+      unit: unit,
     );
   }
 }

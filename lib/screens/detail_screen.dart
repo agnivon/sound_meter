@@ -19,7 +19,7 @@ class _DetailScreenState extends State<DetailScreen> {
   SoundHandle? _soundHandle;
   bool _isPlaying = false;
   Duration _currentPosition = Duration.zero;
-  double _volume = 1.0;
+  double _volume = 4.0;
   bool _isDragging = false;
 
   @override
@@ -66,7 +66,7 @@ class _DetailScreenState extends State<DetailScreen> {
     if (_soundHandle != null && SoLoud.instance.getPause(_soundHandle!)) {
       SoLoud.instance.setPause(_soundHandle!, false);
     } else {
-      _soundHandle = await SoLoud.instance.play(_audioSource!);
+      _soundHandle = await SoLoud.instance.play(_audioSource!, volume: _volume);
       // If we previously seeked while stopped/paused, apply it now.
       if (_currentPosition > Duration.zero) {
         SoLoud.instance.seek(_soundHandle!, _currentPosition);
@@ -127,9 +127,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final classification = getEnvironmentDescription(widget.recording.avgDb);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recording Details'),
-      ),
+      appBar: AppBar(title: const Text('Recording Details')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -143,7 +141,8 @@ class _DetailScreenState extends State<DetailScreen> {
                     children: [
                       Text(
                         widget.recording.name,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
@@ -152,14 +151,19 @@ class _DetailScreenState extends State<DetailScreen> {
                       Text(
                         dateFormat.format(widget.recording.timestamp),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(20),
@@ -180,16 +184,10 @@ class _DetailScreenState extends State<DetailScreen> {
             const SizedBox(height: 32),
             const Text(
               'Noise Level History',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: _buildHistoryChart(context),
-            ),
+            SizedBox(height: 200, child: _buildHistoryChart(context)),
             const SizedBox(height: 40),
             _buildPlayerControls(context),
           ],
@@ -202,40 +200,66 @@ class _DetailScreenState extends State<DetailScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Theme.of(
+            context,
+          ).colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(context, 'Min', '${widget.recording.minDb.toStringAsFixed(1)} dB'),
-          _buildStatItem(context, 'Avg', '${widget.recording.avgDb.toStringAsFixed(1)} dB', isPrimary: true),
-          _buildStatItem(context, 'Max', '${widget.recording.maxDb.toStringAsFixed(1)} dB'),
+          _buildStatItem(
+            context,
+            'Min',
+            '${widget.recording.minDb.toStringAsFixed(1)} ${widget.recording.unit}',
+          ),
+          _buildStatItem(
+            context,
+            'Avg',
+            '${widget.recording.avgDb.toStringAsFixed(1)} ${widget.recording.unit}',
+            isPrimary: true,
+          ),
+          _buildStatItem(
+            context,
+            'Max',
+            '${widget.recording.maxDb.toStringAsFixed(1)} ${widget.recording.unit}',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, {bool isPrimary = false}) {
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isPrimary = false,
+  }) {
     return Column(
       children: [
         Text(
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: isPrimary ? 24 : 18,
+            fontSize: isPrimary ? 20 : 18,
             fontWeight: FontWeight.bold,
-            color: isPrimary ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+            color: isPrimary
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -262,15 +286,16 @@ class _DetailScreenState extends State<DetailScreen> {
           color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           borderColor: Theme.of(context).colorScheme.primary,
           borderWidth: 2,
-        )
+        ),
       ],
       plotAreaBorderWidth: 0,
     );
   }
 
   Widget _buildPlayerControls(BuildContext context) {
-    final progress = widget.recording.duration.inMilliseconds > 0 
-        ? _currentPosition.inMilliseconds / widget.recording.duration.inMilliseconds
+    final progress = widget.recording.duration.inMilliseconds > 0
+        ? _currentPosition.inMilliseconds /
+              widget.recording.duration.inMilliseconds
         : 0.0;
 
     return Column(
@@ -290,7 +315,8 @@ class _DetailScreenState extends State<DetailScreen> {
             },
             onChangeEnd: (value) {
               final target = Duration(
-                milliseconds: (value * widget.recording.duration.inMilliseconds).toInt(),
+                milliseconds: (value * widget.recording.duration.inMilliseconds)
+                    .toInt(),
               );
               if (_soundHandle != null) {
                 SoLoud.instance.seek(_soundHandle!, target);
@@ -303,7 +329,9 @@ class _DetailScreenState extends State<DetailScreen> {
             onChanged: (value) {
               setState(() {
                 _currentPosition = Duration(
-                  milliseconds: (value * widget.recording.duration.inMilliseconds).toInt(),
+                  milliseconds:
+                      (value * widget.recording.duration.inMilliseconds)
+                          .toInt(),
                 );
               });
             },
@@ -339,7 +367,9 @@ class _DetailScreenState extends State<DetailScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -352,20 +382,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 24),
-            IconButton(
-              icon: Icon(
-                _volume == 0 ? Icons.volume_off : Icons.volume_up,
-              ),
-              onPressed: () {
-                setState(() {
-                  _volume = _volume == 1.0 ? 0.0 : 1.0;
-                });
-                if (_soundHandle != null) {
-                  SoLoud.instance.setVolume(_soundHandle!, _volume);
-                }
-              },
-            ),
+            const SizedBox(width: 72), // Maintain spacing balance if needed or just remove it.
           ],
         ),
       ],

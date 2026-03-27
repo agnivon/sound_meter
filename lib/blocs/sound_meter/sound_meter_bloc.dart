@@ -11,6 +11,7 @@ import '../history/history_event.dart';
 
 import 'sound_meter_event.dart';
 import 'sound_meter_state.dart';
+import '../../utils/sound_utils.dart';
 
 /// The [SoundMeterBloc] manages the application's core audio recording state,
 /// processing native device microphone input to extract decibel levels, waveform buffers,
@@ -51,6 +52,12 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
   /// The calibration offset in dB applied to all incoming hardware readings.
   double _dbOffset = 0.0;
 
+  /// Current frequency weighting selection.
+  FrequencyWeighting _freqWeighting = FrequencyWeighting.a;
+
+  /// Current time weighting selection.
+  TimeWeighting _timeWeighting = TimeWeighting.fast;
+
   /// Maintains a rolling sliding window of historical dB values.
   /// Used predominantly to render the continuous red timeline graph mapping backwards over ~24 seconds.
   final List<double> _dbHistory = [];
@@ -63,6 +70,24 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     on<ResetSoundMeter>(_onReset);
     on<UpdateDbOffset>(_onUpdateDbOffset);
     on<SaveSoundMeter>(_onSave);
+    on<SetFrequencyWeighting>(_onSetFrequencyWeighting);
+    on<SetTimeWeighting>(_onSetTimeWeighting);
+  }
+
+  /// Updates the frequency weighting type.
+  void _onSetFrequencyWeighting(SetFrequencyWeighting event, Emitter<SoundMeterState> emit) {
+    _freqWeighting = event.weighting;
+    if (state is SoundMeterRecording) {
+      emit((state as SoundMeterRecording).copyWith(freqWeighting: _freqWeighting));
+    }
+  }
+
+  /// Updates the time weighting type.
+  void _onSetTimeWeighting(SetTimeWeighting event, Emitter<SoundMeterState> emit) {
+    _timeWeighting = event.weighting;
+    if (state is SoundMeterRecording) {
+      emit((state as SoundMeterRecording).copyWith(timeWeighting: _timeWeighting));
+    }
   }
 
   /// Handles the calibration offset update logic.
@@ -88,7 +113,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
       volumeDbFs = volumeDbFs.clamp(-120.0, 0.0);
 
       // Convert mapping from negative DBFS space into absolute positive environmental decibel (0 to 120 bounds).
-      double currentDb = (volumeDbFs + 100);
+      double currentDb = (volumeDbFs + 110);
       if (currentDb < 0) currentDb = 0.0;
 
       // 2. Extract the synchronous raw audio physical membrane array output (ranging from -1.0 to 1.0).
@@ -149,6 +174,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
         duration: _duration,
         dbHistory: List.from(_dbHistory),
         filePath: _currentFilePath!,
+        unit: _freqWeighting.unit,
       );
 
       historyBloc?.add(AddRecording(recording));
@@ -195,14 +221,18 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     }
 
     try {
-      // Initialize internal native recording bindings (PCM 32-bit floats provide maximum resolution).
+      // Initialize internal native recording bindings (16-bit PCM at 44.1kHz is standard for mobile).
       if (!Recorder.instance.isDeviceInitialized()) {
-        await Recorder.instance.init(format: PCMFormat.f32le);
+        await Recorder.instance.init(
+          format: PCMFormat.s16le,
+          sampleRate: 44100,
+        );
       }
       
       _currentFilePath = await _prepareRecordingPath();
       // Spin up the listener daemon safely.
       Recorder.instance.start();
+
       // Start recording to file.
       Recorder.instance.startRecording(completeFilePath: _currentFilePath!);
 
@@ -225,6 +255,8 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
           avgDb: 0,
           duration: Duration.zero,
           dbOffset: _dbOffset,
+          freqWeighting: _freqWeighting,
+          timeWeighting: _timeWeighting,
         ),
       );
     } catch (e) {
@@ -282,8 +314,27 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     }
 
     final rawDb = event.dbValue;
-    // Apply calibration offset
-    final db = rawDb + _dbOffset;
+    // 1. Apply frequency weighting offset based on detected peak frequency
+    final freqOffset = SoundUtils.getFrequencyWeightingOffset(event.peakFrequency, _freqWeighting);
+    
+    // 2. Combine raw, offset, and frequency weighting
+    final instantDb = rawDb + _dbOffset + freqOffset;
+
+    // 3. Apply time weighting smoothing
+    double alpha;
+    if (_timeWeighting == TimeWeighting.impulse) {
+      // Impulse specialization: fast rise, slow decay
+      if (instantDb > _avgDb) {
+        alpha = SoundUtils.calculateAlpha(Duration(milliseconds: _tickMs), const Duration(milliseconds: 35));
+      } else {
+        alpha = SoundUtils.calculateAlpha(Duration(milliseconds: _tickMs), const Duration(milliseconds: 1500));
+      }
+    } else {
+      alpha = SoundUtils.calculateAlpha(Duration(milliseconds: _tickMs), _timeWeighting.tau);
+    }
+    
+    // Smoothing currentDb for display (EMA)
+    final db = (_avgDb * (1 - alpha)) + (instantDb * alpha);
 
     // Manage a strictly shifting sliding window for Timeline rendering dynamically.
     _dbHistory.add(db);
@@ -324,6 +375,8 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
         waveData: event.waveData,
         fftData: event.fftData,
         peakFrequency: event.peakFrequency,
+        freqWeighting: _freqWeighting,
+        timeWeighting: _timeWeighting,
       ),
     );
   }
@@ -367,6 +420,8 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
         waveData: const [],
         fftData: const [],
         peakFrequency: 0.0,
+        freqWeighting: _freqWeighting,
+        timeWeighting: _timeWeighting,
       ),
     );
   }
