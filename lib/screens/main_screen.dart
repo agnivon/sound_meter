@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../blocs/theme/theme_bloc.dart';
 import '../blocs/theme/theme_event.dart';
 import '../blocs/theme/theme_state.dart';
@@ -10,6 +11,8 @@ import '../widgets/db_legend_dialog.dart';
 import '../widgets/db_meter.dart';
 import '../widgets/charts.dart';
 import '../widgets/calibration_dialog.dart';
+import '../utils/sound_utils.dart';
+import 'history_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -33,10 +36,6 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: const Text('Sound Meter'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.track_changes),
-            onPressed: () => showCalibrationDialog(context),
-          ),
           BlocBuilder<ThemeBloc, ThemeState>(
             builder: (context, themeState) {
               IconData themeIcon = themeState.themeMode == ThemeMode.light
@@ -61,6 +60,15 @@ class _MainScreenState extends State<MainScreen> {
                   }
                   showDbLegendDialog(context, currentAvg);
                 },
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HistoryScreen()),
               );
             },
           ),
@@ -149,10 +157,15 @@ class _MainScreenState extends State<MainScreen> {
                                   ? Icons.waves
                                   : Icons.graphic_eq,
                             ),
-                            color: const Color(0xFFE85A3F),
+                            color: Theme.of(context).colorScheme.primary,
                             onPressed: () => setState(
                               () => _activeChart = (_activeChart + 1) % 3,
                             ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.track_changes),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                            onPressed: () => showCalibrationDialog(context),
                           ),
                           GestureDetector(
                             onTap: () {
@@ -186,6 +199,13 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                           ),
                           IconButton(
+                            icon: const Icon(Icons.save_outlined),
+                            color: state.hasReading 
+                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
+                                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+                            onPressed: state.hasReading ? () => _showSaveDialog(context, state) : null,
+                          ),
+                          IconButton(
                             icon: const Icon(Icons.refresh),
                             color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                             onPressed: () {
@@ -205,6 +225,45 @@ class _MainScreenState extends State<MainScreen> {
             },
           ),
         ),
+      ),
+    );
+  }
+
+  void _showSaveDialog(BuildContext context, SoundMeterRecording state) {
+    final controller = TextEditingController(
+      text: 'Recording ${DateFormat('HH:mm').format(DateTime.now())}',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Save Recording'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Enter recording name',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                context.read<SoundMeterBloc>().add(SaveSoundMeter(name));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Recording saved!')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }

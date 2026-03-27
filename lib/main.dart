@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
+import 'blocs/history/history_bloc.dart';
 
 import 'blocs/theme/theme_bloc.dart';
 import 'blocs/theme/theme_state.dart';
@@ -12,6 +15,12 @@ import 'package:permission_handler/permission_handler.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  final directory = await getApplicationDocumentsDirectory();
+  final storage = await HydratedStorage.build(
+    storageDirectory: HydratedStorageDirectory(directory.path),
+  );
+  HydratedBloc.storage = storage;
+
   final status = await Permission.microphone.request();
   if (status == PermissionStatus.granted) {
     if (!Recorder.instance.isDeviceInitialized()) {
@@ -36,7 +45,12 @@ class MyApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => SoundMeterBloc()),
+        BlocProvider(create: (context) => HistoryBloc()),
+        BlocProvider(
+          create: (context) => SoundMeterBloc(
+            historyBloc: context.read<HistoryBloc>(),
+          ),
+        ),
         BlocProvider(create: (context) => ThemeBloc(initialMode)),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(

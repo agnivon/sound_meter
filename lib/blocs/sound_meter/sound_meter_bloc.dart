@@ -2,6 +2,12 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_recorder/flutter_recorder.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+import '../../models/recording_model.dart';
+import '../history/history_bloc.dart';
+import '../history/history_event.dart';
 
 import 'sound_meter_event.dart';
 import 'sound_meter_state.dart';
@@ -13,8 +19,13 @@ import 'sound_meter_state.dart';
 /// It utilizes `flutter_recorder` to interface natively with the system microphone,
 /// polling at a high frame rate to provide instantaneous updates for responsive UI charting.
 class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
+  final HistoryBloc? historyBloc;
+
   /// Internal timer responsible for polling the hardware buffer continuously.
   Timer? _timer;
+
+  /// Tracks the current audio file path.
+  String? _currentFilePath;
 
   /// Tracks the peak decibel reading recorded across the active session.
   double _maxDb = 0;
@@ -44,13 +55,14 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
   /// Used predominantly to render the continuous red timeline graph mapping backwards over ~24 seconds.
   final List<double> _dbHistory = [];
 
-  SoundMeterBloc() : super(SoundMeterInitial()) {
+  SoundMeterBloc({this.historyBloc}) : super(SoundMeterInitial()) {
     on<InitializeSoundMeter>(_onInitialize);
     on<UpdateSoundMeterDb>(_onUpdate);
     on<TogglePauseSoundMeter>(_onTogglePause);
     on<StopSoundMeter>(_onStop);
     on<ResetSoundMeter>(_onReset);
     on<UpdateDbOffset>(_onUpdateDbOffset);
+    on<SaveSoundMeter>(_onSave);
   }
 
   /// Handles the calibration offset update logic.
@@ -102,6 +114,73 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     });
   }
 
+  Future<String> _prepareRecordingPath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName = 'temp_recording_${DateTime.now().millisecondsSinceEpoch}.wav';
+    return p.join(directory.path, fileName);
+  }
+
+  /// Handles the saving of the current recording session.
+  Future<void> _onSave(SaveSoundMeter event, Emitter<SoundMeterState> emit) async {
+    if (state is! SoundMeterRecording) return;
+
+    _timer?.cancel();
+    _timer = null;
+    
+    // Stop the actual file recording
+    try {
+      Recorder.instance.stopRecording();
+    } catch (_) {}
+
+    // We can keep the engine running or stop it. 
+    // Usually, stop() stops the whole thing.
+    try {
+      Recorder.instance.stop();
+    } catch (_) {}
+
+    if (_currentFilePath != null) {
+      final recording = SoundRecording(
+        id: const Uuid().v4(),
+        name: event.name,
+        timestamp: DateTime.now(),
+        minDb: _minDb,
+        maxDb: _maxDb,
+        avgDb: _avgDb,
+        duration: _duration,
+        dbHistory: List.from(_dbHistory),
+        filePath: _currentFilePath!,
+      );
+
+      historyBloc?.add(AddRecording(recording));
+    }
+
+    // Reset state after saving
+    _maxDb = 0;
+    _minDb = 120;
+    _avgDb = 0;
+    _duration = Duration.zero;
+    _isFirstReading = true;
+    _dbHistory.clear();
+    _currentFilePath = null;
+
+    emit(
+      SoundMeterRecording(
+        currentDb: 0,
+        maxDb: 0,
+        minDb: 0,
+        avgDb: 0,
+        duration: Duration.zero,
+        isPaused: true,
+        hasReading: false,
+        dbOffset: _dbOffset,
+        dbHistory: const [],
+        waveData: const [],
+        fftData: const [],
+        peakFrequency: 0.0,
+      ),
+    );
+  }
+
   /// Initializes the Sound Meter recording session asynchronously.
   /// Requests microphone hardware permissions and invokes native device bindings dynamically.
   Future<void> _onInitialize(
@@ -120,8 +199,12 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
       if (!Recorder.instance.isDeviceInitialized()) {
         await Recorder.instance.init(format: PCMFormat.f32le);
       }
+      
+      _currentFilePath = await _prepareRecordingPath();
       // Spin up the listener daemon safely.
       Recorder.instance.start();
+      // Start recording to file.
+      Recorder.instance.startRecording(completeFilePath: _currentFilePath!);
 
       // Clear structural limits internally so tracking is cleanly formatted from a blank boundary wall.
       _maxDb = 0;
@@ -168,7 +251,9 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
       }
 
       try {
+        _currentFilePath ??= await _prepareRecordingPath();
         Recorder.instance.start();
+        Recorder.instance.startRecording(completeFilePath: _currentFilePath!);
       } catch (_) {}
 
       _startTimer();
@@ -178,6 +263,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
       // Halt the rapid dispatch timing loop implicitly conserving absolute system battery life correctly.
       _timer?.cancel();
       try {
+        Recorder.instance.stopRecording();
         Recorder.instance.stop();
       } catch (_) {}
 

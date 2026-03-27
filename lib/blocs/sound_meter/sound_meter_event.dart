@@ -21,3 +21,8 @@ class UpdateDbOffset extends SoundMeterEvent {
   final double offset;
   UpdateDbOffset(this.offset);
 }
+
+class SaveSoundMeter extends SoundMeterEvent {
+  final String name;
+  SaveSoundMeter(this.name);
+}
