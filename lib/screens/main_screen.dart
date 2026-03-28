@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:intl/intl.dart';
+import '../blocs/theme/theme_bloc.dart';
+import '../blocs/theme/theme_event.dart';
+import '../blocs/theme/theme_state.dart';
 import '../blocs/sound_meter/sound_meter_bloc.dart';
 import '../blocs/sound_meter/sound_meter_event.dart';
 import '../blocs/sound_meter/sound_meter_state.dart';
 import '../widgets/db_legend_dialog.dart';
 import '../widgets/db_meter.dart';
+import '../widgets/charts.dart';
+import '../widgets/calibration_dialog.dart';
+import '../widgets/weighting_dialog.dart';
+import '../utils/sound_utils.dart';
+import 'history_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,6 +23,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  int _activeChart = 0;
+
   @override
   void initState() {
     super.initState();
@@ -24,13 +34,37 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
       appBar: AppBar(
-        title: const Text('Real-Time Noise Meter'),
-        backgroundColor: const Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('Sound Meter'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Weighting',
+            onPressed: () => showWeightingDialog(context),
+          ),
+          BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, themeState) {
+              IconData themeIcon = themeState.themeMode == ThemeMode.light
+                  ? Icons.light_mode
+                  : Icons.dark_mode;
+              return IconButton(
+                icon: Icon(themeIcon),
+                onPressed: () {
+                  context.read<ThemeBloc>().add(ToggleTheme());
+                },
+              );
+            },
+          ),
+
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HistoryScreen()),
+              );
+            },
+          ),
           BlocBuilder<SoundMeterBloc, SoundMeterState>(
             builder: (context, state) {
               return IconButton(
@@ -38,7 +72,7 @@ class _MainScreenState extends State<MainScreen> {
                 onPressed: () {
                   double currentAvg = 0;
                   if (state is SoundMeterRecording) {
-                     currentAvg = state.avgDb;
+                    currentAvg = state.avgDb;
                   }
                   showDbLegendDialog(context, currentAvg);
                 },
@@ -87,64 +121,183 @@ class _MainScreenState extends State<MainScreen> {
               }
 
               if (state is SoundMeterRecording) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DbMeter(
-                      currentDb: state.currentDb,
-                      minDb: state.minDb,
-                      maxDb: state.maxDb,
-                      avgDb: state.avgDb,
-                      duration: state.duration,
-                      hasReading: state.hasReading,
-                      description: getEnvironmentDescription(state.avgDb),
-                    ),
-                    const SizedBox(height: 20),
-                    SegmentedDbGauge(
-                      currentDb: state.currentDb,
-                      hasReading: state.hasReading,
-                    ),
-                    const SizedBox(height: 40),
-                    GestureDetector(
-                      onTap: () {
-                        context.read<SoundMeterBloc>().add(
-                          TogglePauseSoundMeter(),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: state.isPaused
-                              ? Colors.grey.shade800
-                              : const Color(0xFFE85A3F).withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: state.isPaused
-                                ? Colors.grey
-                                : const Color(0xFFE85A3F),
-                            width: 2,
-                          ),
-                        ),
-                        child: Icon(
-                          state.isPaused
-                              ? Icons.play_arrow_rounded
-                              : Icons.pause_rounded,
-                          color: state.isPaused
-                              ? Colors.white
-                              : const Color(0xFFE85A3F),
-                          size: 48,
-                        ),
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DbMeter(
+                        currentDb: state.currentDb,
+                        minDb: state.minDb,
+                        maxDb: state.maxDb,
+                        avgDb: state.avgDb,
+                        duration: state.duration,
+                        hasReading: state.hasReading,
+                        description: getEnvironmentDescription(state.avgDb),
+                        unit: state.freqWeighting.unit,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      SegmentedDbGauge(
+                        currentDb: state.currentDb,
+                        hasReading: state.hasReading,
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _activeChart == 0
+                            ? TimelineChartWidget(history: state.dbHistory)
+                            : _activeChart == 1
+                            ? WaveChartWidget(waveData: state.waveData)
+                            : FftChartWidget(
+                                fftData: state.fftData,
+                                peakFrequency: state.peakFrequency,
+                              ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              _activeChart == 0
+                                  ? Icons.show_chart
+                                  : _activeChart == 1
+                                  ? Icons.waves
+                                  : Icons.graphic_eq,
+                            ),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () => setState(
+                              () => _activeChart = (_activeChart + 1) % 3,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.track_changes),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
+                            onPressed: () => showCalibrationDialog(context),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              context.read<SoundMeterBloc>().add(
+                                TogglePauseSoundMeter(),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: state.isPaused
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest
+                                    : Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: state.isPaused
+                                      ? Theme.of(context).colorScheme.onSurface
+                                            .withValues(alpha: 0.3)
+                                      : Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                state.isPaused
+                                    ? Icons.play_arrow_rounded
+                                    : Icons.pause_rounded,
+                                color: state.isPaused
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Theme.of(context).colorScheme.primary,
+                                size: 48,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.save_outlined),
+                            color: state.hasReading
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withValues(alpha: 0.7)
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withValues(alpha: 0.2),
+                            onPressed: state.hasReading
+                                ? () {
+                                    final name =
+                                        'Recording ${DateFormat('HH:mm').format(DateTime.now())}';
+                                    context
+                                        .read<SoundMeterBloc>()
+                                        .add(SaveSoundMeter(name));
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Recording saved!')),
+                                    );
+                                  }
+                                : null,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
+                            onPressed: () {
+                              context.read<SoundMeterBloc>().add(
+                                ResetSoundMeter(),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 );
               }
 
-              return const CircularProgressIndicator(color: Colors.redAccent);
+              return CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              );
             },
           ),
         ),
       ),
     );
   }
+
+/*
+  void _showSaveDialog(BuildContext context, SoundMeterRecording state) {
+    final controller = TextEditingController(
+      text: 'Recording ${DateFormat('HH:mm').format(DateTime.now())}',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Save Recording'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Enter recording name'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                context.read<SoundMeterBloc>().add(SaveSoundMeter(name));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Recording saved!')),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+*/
 }

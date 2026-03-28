@@ -5,21 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "sound_meter",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "sound_meter (profile mode)",
+            "name": "sound_meter (dev)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "debug",
+            "args": [
+                "--flavor",
+                "development"
+            ]
         },
         {
-            "name": "sound_meter (release mode)",
+            "name": "sound_meter (prod)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "args": [
+                "--flavor",
+                "production"
+            ]
         }
     ]
 }
