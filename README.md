@@ -114,7 +114,7 @@ lib/
 ### Prerequisites
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) `>= 3.11.1`
-- Android SDK (API 21+) or iOS development environment
+- Android SDK (API 21+)
 - A physical device with a microphone (emulators have limited audio support)
 
 ### Installation
@@ -179,10 +179,7 @@ test/
 
 ## 📋 Permissions
 
-| Permission | Platform | Reason |
-|---|---|---|
 | `RECORD_AUDIO` | Android | Microphone access for sound measurement |
-| Microphone | iOS | Microphone access for sound measurement |
 
 The app requests microphone permission at startup. All audio processing is performed **on-device** — no data is transmitted externally.
 

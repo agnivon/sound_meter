@@ -221,7 +221,7 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     }
 
     try {
-      // Initialize internal native recording bindings (16-bit PCM at 44.1kHz is standard for mobile).
+      // Initialize internal native recording bindings (16-bit PCM at 44.1kHz is standard for Android).
       if (!Recorder.instance.isDeviceInitialized()) {
         await Recorder.instance.init(
           format: PCMFormat.s16le,

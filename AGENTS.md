@@ -8,7 +8,7 @@
 
 **Repository**: `github.com/agnivon/sound_meter`
 **Framework**: Flutter (Dart `^3.11.1`)
-**Target Platform**: Android (primary), iOS (secondary)
+**Target Platform**: Android
 
 ---
 

@@ -11,6 +11,8 @@ jobs:
     name: Build & Release Production App
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
