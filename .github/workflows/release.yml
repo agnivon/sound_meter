@@ -1,0 +1,77 @@
+name: Release App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_and_release:
+    name: Build & Release Production App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Tests
+        run: flutter test
+
+      - name: Extract Version from pubspec.yaml
+        id: versioning
+        run: |
+          VERSION=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Android Keystore
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > android/upload.keystore
+          cat <<EOF > android/key.properties
+          storeFile=../upload.keystore
+          keyAlias=$UPLOAD_KEY_ALIAS
+          keyPassword=$UPLOAD_KEY_PASSWORD
+          storePassword=$UPLOAD_STORE_PASSWORD
+          EOF
+
+      - name: Build APK (Production, Release, Split-per-ABI)
+        run: >
+          flutter build apk
+          --flavor production
+          --release
+          --split-per-abi
+          --build-name=${{ steps.versioning.outputs.version }}
+          --build-number=${{ github.run_number }}
+
+      - name: Collect Output APKs
+        run: |
+          mkdir release-apks
+          find build/app/outputs/flutter-apk/ -name "*.apk" -type f -exec cp {} release-apks/ \;
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.versioning.outputs.version }}+${{ github.run_number }}"
+          name: "Release v${{ steps.versioning.outputs.version }} (Build ${{ github.run_number }})"
+          files: release-apks/*.apk
+          generate_release_notes: true
+          fail_on_unmatched_files: true
