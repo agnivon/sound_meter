@@ -10,6 +10,7 @@ jobs:
   build_and_release:
     name: Build & Release Production App
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout Repository
