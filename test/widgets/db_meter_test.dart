@@ -28,7 +28,9 @@ void main() {
   }
 
   group('DbMeter Widget Tests', () {
-    testWidgets('displays correctly with readings', (WidgetTester tester) async {
+    testWidgets('displays correctly with readings', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
 
       // Check text existence
@@ -40,16 +42,23 @@ void main() {
       expect(find.text('dB'), findsOneWidget);
     });
 
-    testWidgets('displays placeholders when no reading', (WidgetTester tester) async {
+    testWidgets('displays placeholders when no reading', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest(hasReading: false));
 
       expect(find.text('-.-'), findsOneWidget); // current placeholder
       expect(find.text('-'), findsNWidgets(2)); // min and max placeholder
-      expect(find.text('--'), findsNWidgets(2)); // avg placeholder and something else matching
+      expect(
+        find.text('--'),
+        findsNWidgets(2),
+      ); // avg placeholder and something else matching
     });
 
     testWidgets('formats duration correctly', (WidgetTester tester) async {
-      await tester.pumpWidget(createWidgetUnderTest(duration: const Duration(minutes: 5, seconds: 9)));
+      await tester.pumpWidget(
+        createWidgetUnderTest(duration: const Duration(minutes: 5, seconds: 9)),
+      );
 
       expect(find.text('05:09'), findsOneWidget);
     });

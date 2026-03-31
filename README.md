@@ -35,7 +35,7 @@ Professional frequency and time weighting based on **IEC 61672-1:2003**:
 
 ### 💾 Recording & History
 - **Save sessions** with full metadata (min/max/avg dB, duration, dB history, weighting unit)
-- **Audio file recording** (WAV) via native PCM capture
+- **Audio file recording** (WAV) via native 32-bit float PCM capture
 - **Persistent history** powered by `hydrated_bloc` — recordings survive app restarts
 - **Detail screen** with stats card, area chart replay, and built-in audio playback (SoLoud)
 - **Rename, share, and delete** recordings

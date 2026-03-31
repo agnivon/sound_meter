@@ -126,5 +126,5 @@ dart format .
 
 - **Physical device required** — emulators have unreliable microphone hardware for real-time audio
 - Audio processing runs entirely on-device; no network calls
-- Recorder initialized with PCM format at 44.1 kHz sample rate
-- FFT bin resolution: `44100 / 2 / 256 ≈ 86.13 Hz` per bin
+- Recorder initialized with 32-bit float PCM format (`f32le`) at 48 kHz sample rate
+- FFT bin resolution: `48000 / 2 / 256 = 93.75 Hz` per bin

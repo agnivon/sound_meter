@@ -8,21 +8,19 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   // Mocking the flutter_soloud platform channel to prevent MissingPluginException
-  // Note: flutter_soloud might use FFI depending on platform, but we set up a 
+  // Note: flutter_soloud might use FFI depending on platform, but we set up a
   // basic channel mock just in case it uses standard MethodChannels for init.
   const MethodChannel channel = MethodChannel('flutter_soloud');
-  
+
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      return null;
-    });
+          return null;
+        });
   });
 
   Widget createWidgetUnderTest(SoundRecording recording) {
-    return MaterialApp(
-      home: DetailScreen(recording: recording),
-    );
+    return MaterialApp(home: DetailScreen(recording: recording));
   }
 
   group('DetailScreen Tests', () {
@@ -38,7 +36,9 @@ void main() {
       filePath: '/dev/null/concert.wav',
     );
 
-    testWidgets('displays recording details correctly', (WidgetTester tester) async {
+    testWidgets('displays recording details correctly', (
+      WidgetTester tester,
+    ) async {
       await tester.runAsync(() async {
         await tester.pumpWidget(createWidgetUnderTest(testRecording));
         await tester.pump();
@@ -55,7 +55,7 @@ void main() {
 
       // Check charts section
       expect(find.text('Noise Level History'), findsOneWidget);
-      
+
       // Check play button
       expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
       expect(find.byIcon(Icons.stop_rounded), findsOneWidget);

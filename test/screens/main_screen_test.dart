@@ -17,9 +17,14 @@ import 'package:sound_meter/widgets/db_meter.dart';
 import 'package:sound_meter/widgets/charts.dart';
 import 'package:sound_meter/utils/sound_utils.dart';
 
-class MockSoundMeterBloc extends MockBloc<SoundMeterEvent, SoundMeterState> implements SoundMeterBloc {}
-class MockThemeBloc extends MockBloc<ThemeEvent, ThemeState> implements ThemeBloc {}
-class MockHistoryBloc extends MockBloc<HistoryEvent, HistoryState> implements HistoryBloc {}
+class MockSoundMeterBloc extends MockBloc<SoundMeterEvent, SoundMeterState>
+    implements SoundMeterBloc {}
+
+class MockThemeBloc extends MockBloc<ThemeEvent, ThemeState>
+    implements ThemeBloc {}
+
+class MockHistoryBloc extends MockBloc<HistoryEvent, HistoryState>
+    implements HistoryBloc {}
 
 void main() {
   setUpAll(() {
@@ -57,7 +62,9 @@ void main() {
       when(() => mockThemeBloc.state).thenReturn(ThemeState(ThemeMode.dark));
     });
 
-    testWidgets('renders loading state when initial', (WidgetTester tester) async {
+    testWidgets('renders loading state when initial', (
+      WidgetTester tester,
+    ) async {
       when(() => mockSoundMeterBloc.state).thenReturn(SoundMeterInitial());
 
       await tester.pumpWidget(
@@ -71,7 +78,9 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('renders recording state with DbMeter and charts', (WidgetTester tester) async {
+    testWidgets('renders recording state with DbMeter and charts', (
+      WidgetTester tester,
+    ) async {
       when(() => mockSoundMeterBloc.state).thenReturn(
         SoundMeterRecording(
           currentDb: 55,
@@ -103,7 +112,9 @@ void main() {
     });
 
     testWidgets('renders error state', (WidgetTester tester) async {
-      when(() => mockSoundMeterBloc.state).thenReturn(SoundMeterError('Mic Permission Denied'));
+      when(
+        () => mockSoundMeterBloc.state,
+      ).thenReturn(SoundMeterError('Mic Permission Denied'));
 
       await tester.pumpWidget(
         createWidgetUnderTest(
