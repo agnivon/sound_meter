@@ -9,7 +9,8 @@ import 'package:sound_meter/blocs/sound_meter/sound_meter_state.dart';
 import 'package:sound_meter/widgets/weighting_dialog.dart';
 import 'package:sound_meter/utils/sound_utils.dart';
 
-class MockSoundMeterBloc extends MockBloc<SoundMeterEvent, SoundMeterState> implements SoundMeterBloc {}
+class MockSoundMeterBloc extends MockBloc<SoundMeterEvent, SoundMeterState>
+    implements SoundMeterBloc {}
 
 void main() {
   setUpAll(() {
@@ -35,7 +36,9 @@ void main() {
       mockSoundMeterBloc = MockSoundMeterBloc();
     });
 
-    testWidgets('renders when state is SoundMeterRecording', (WidgetTester tester) async {
+    testWidgets('renders when state is SoundMeterRecording', (
+      WidgetTester tester,
+    ) async {
       when(() => mockSoundMeterBloc.state).thenReturn(
         SoundMeterRecording(
           currentDb: 50,
@@ -79,19 +82,23 @@ void main() {
       // Tap on C-Weighting
       await tester.tap(find.text('C-Weighting'));
       await tester.pump();
-      verify(() => mockSoundMeterBloc.add(any(that: isA<SetFrequencyWeighting>()))).called(1);
+      verify(
+        () => mockSoundMeterBloc.add(any(that: isA<SetFrequencyWeighting>())),
+      ).called(1);
 
       // Tap on Slow
       await tester.ensureVisible(find.text('Slow'));
       await tester.tap(find.text('Slow'));
       await tester.pump();
-      verify(() => mockSoundMeterBloc.add(any(that: isA<SetTimeWeighting>()))).called(1);
+      verify(
+        () => mockSoundMeterBloc.add(any(that: isA<SetTimeWeighting>())),
+      ).called(1);
     });
 
     testWidgets('closes on Close button tap', (WidgetTester tester) async {
       when(() => mockSoundMeterBloc.state).thenReturn(
         SoundMeterRecording(
-           currentDb: 50,
+          currentDb: 50,
           maxDb: 50,
           minDb: 0,
           avgDb: 50,
@@ -100,9 +107,9 @@ void main() {
       );
 
       await tester.pumpWidget(createWidgetUnderTest(mockSoundMeterBloc));
-      
+
       expect(find.byType(AlertDialog), findsOneWidget);
-      
+
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
 

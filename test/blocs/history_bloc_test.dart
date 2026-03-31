@@ -72,7 +72,7 @@ void main() {
       ],
     );
 
-    // Testing DeleteRecording logic that interacts with File System requires more mocking 
+    // Testing DeleteRecording logic that interacts with File System requires more mocking
     // but the state update part can be tested by passing a dummy file path.
     blocTest<HistoryBloc, HistoryState>(
       'emits correct state when DeleteRecording is added',

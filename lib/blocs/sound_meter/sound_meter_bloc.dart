@@ -131,8 +131,8 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
           peakIndex = i;
         }
       }
-      // Calculate actual structural Hz frequency using the native 44.1kHz sampling rate mapping across standard 256 frame divisors.
-      double peakFrequency = peakIndex * (44100.0 / 2 / 256);
+      // Calculate actual structural Hz frequency using the native 48kHz sampling rate mapping across standard 256 frame divisors.
+      double peakFrequency = peakIndex * (48000.0 / 2 / 256);
 
       // Dispatch the payload safely back up directly to the Bloc event queue so UI safely redraws bounds.
       add(UpdateSoundMeterDb(currentDb, waveData, fftData, peakFrequency));
@@ -221,11 +221,11 @@ class SoundMeterBloc extends Bloc<SoundMeterEvent, SoundMeterState> {
     }
 
     try {
-      // Initialize internal native recording bindings (16-bit PCM at 44.1kHz is standard for Android).
+      // Initialize internal native recording bindings (32-bit float PCM at 48kHz provides maximum quality).
       if (!Recorder.instance.isDeviceInitialized()) {
         await Recorder.instance.init(
-          format: PCMFormat.s16le,
-          sampleRate: 44100,
+          format: PCMFormat.f32le,
+          sampleRate: 48000,
         );
       }
       

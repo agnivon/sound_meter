@@ -26,7 +26,11 @@ void main() {
       build: () => themeBloc,
       act: (bloc) => bloc.add(ToggleTheme()),
       expect: () => [
-        isA<ThemeState>().having((state) => state.themeMode, 'themeMode', ThemeMode.light),
+        isA<ThemeState>().having(
+          (state) => state.themeMode,
+          'themeMode',
+          ThemeMode.light,
+        ),
       ],
     );
 
@@ -35,7 +39,11 @@ void main() {
       build: () => ThemeBloc(ThemeMode.light),
       act: (bloc) => bloc.add(ToggleTheme()),
       expect: () => [
-        isA<ThemeState>().having((state) => state.themeMode, 'themeMode', ThemeMode.dark),
+        isA<ThemeState>().having(
+          (state) => state.themeMode,
+          'themeMode',
+          ThemeMode.dark,
+        ),
       ],
     );
 
@@ -44,7 +52,11 @@ void main() {
       build: () => themeBloc,
       act: (bloc) => bloc.add(SetThemeMode(ThemeMode.system)),
       expect: () => [
-        isA<ThemeState>().having((state) => state.themeMode, 'themeMode', ThemeMode.system),
+        isA<ThemeState>().having(
+          (state) => state.themeMode,
+          'themeMode',
+          ThemeMode.system,
+        ),
       ],
     );
   });

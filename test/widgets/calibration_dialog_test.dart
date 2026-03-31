@@ -8,7 +8,8 @@ import 'package:sound_meter/blocs/sound_meter/sound_meter_event.dart';
 import 'package:sound_meter/blocs/sound_meter/sound_meter_state.dart';
 import 'package:sound_meter/widgets/calibration_dialog.dart';
 
-class MockSoundMeterBloc extends MockBloc<SoundMeterEvent, SoundMeterState> implements SoundMeterBloc {}
+class MockSoundMeterBloc extends MockBloc<SoundMeterEvent, SoundMeterState>
+    implements SoundMeterBloc {}
 
 void main() {
   setUpAll(() {
@@ -33,7 +34,9 @@ void main() {
       mockSoundMeterBloc = MockSoundMeterBloc();
     });
 
-    testWidgets('displays correct initial offset and handles tap events', (WidgetTester tester) async {
+    testWidgets('displays correct initial offset and handles tap events', (
+      WidgetTester tester,
+    ) async {
       when(() => mockSoundMeterBloc.state).thenReturn(
         SoundMeterRecording(
           currentDb: 50,
@@ -53,12 +56,14 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
-      
-      verify(() => mockSoundMeterBloc.add(any(that: isA<UpdateDbOffset>()))).called(1);
+
+      verify(
+        () => mockSoundMeterBloc.add(any(that: isA<UpdateDbOffset>())),
+      ).called(1);
     });
 
     testWidgets('reset button resets offset', (WidgetTester tester) async {
-       when(() => mockSoundMeterBloc.state).thenReturn(
+      when(() => mockSoundMeterBloc.state).thenReturn(
         SoundMeterRecording(
           currentDb: 50,
           rawDb: 45,
@@ -74,8 +79,10 @@ void main() {
 
       await tester.tap(find.text('RESET'));
       await tester.pump();
-      
-      verify(() => mockSoundMeterBloc.add(any(that: isA<UpdateDbOffset>()))).called(1);
+
+      verify(
+        () => mockSoundMeterBloc.add(any(that: isA<UpdateDbOffset>())),
+      ).called(1);
     });
   });
 }
