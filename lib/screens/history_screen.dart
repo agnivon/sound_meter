@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../blocs/history/history_bloc.dart';
 import '../blocs/history/history_state.dart';
 import '../blocs/history/history_event.dart';
@@ -216,7 +217,13 @@ class _RecordingTile extends StatelessWidget {
         _showRenameDialog(context);
         break;
       case 'share':
-        // TODO: Implement share
+        SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(recording.filePath)],
+            title:
+                'Sound measurement: ${recording.name} (${recording.avgDb.toStringAsFixed(1)} ${recording.unit})',
+          ),
+        );
         break;
       case 'delete':
         _showDeleteConfirmation(context);
